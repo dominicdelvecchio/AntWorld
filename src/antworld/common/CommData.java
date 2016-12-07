@@ -35,7 +35,7 @@ public class CommData implements Serializable
   /** list of ants that belong to this team and nest.<br>
    * The server returns this list with the current ants in this team and their actions.<br>
    * The client uses this list to tell the server which ants are going to do what.<br>
-   * The client also adds ants to this list to brith an ant form nest resources.<br>
+   * The client also adds ants to this list to brith an ant form nest antworld.resources.<br>
    * The client returns myAntList to the server with the ants ordered. The ant's actions are 
    * executed from first element to last.<br><br>
    * 

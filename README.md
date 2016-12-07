@@ -13,7 +13,7 @@ Modules -> Sources -><br>
 <ul>
    <li>Content Root: yourpath\AntWorld</li>
    <li>Source Folders: src</li>
-   <li>Resource Folders: resources</li>
+   <li>Resource Folders: antworld.resources</li>
 </ul>
 
 
