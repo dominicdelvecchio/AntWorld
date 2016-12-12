@@ -124,6 +124,7 @@ public class AntBrain
    * @param centerY nest y
    * @param waterPosition best known water position
    */
+  
   public AntBrain(AntData ant, CommData commData, WorldMap map, LinkedList<Tiles> exploreDeque,
                      HashSet<Tiles> blockedMoves, HashSet<Tiles> plannedMoves, int centerX, int centerY,
                      Tiles waterPosition)
@@ -753,7 +754,7 @@ public class AntBrain
     {
       return false;
     }
-    final WorkerBrain other = (WorkerBrain) obj;
+    final AntBrain other = (AntBrain) obj;
     if (this.data.id != other.data.id)
     {
       return false;

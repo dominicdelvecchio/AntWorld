@@ -132,13 +132,13 @@ public class EderinDominicClient
     }
     catch (UnknownHostException e)
     {
-      System.err.println("SmartClient Error: Unknown Host " + host);
+      System.err.println("EderinDominicClient Error: Unknown Host " + host);
       e.printStackTrace();
       return false;
     }
     catch (IOException e)
     {
-      System.err.println("SmartClient Error: Could not open connection to " + host + " on port " + portNumber);
+      System.err.println("EderinDominicClient: Could not open connection to " + host + " on port " + portNumber);
       e.printStackTrace();
       return false;
     }
@@ -151,7 +151,7 @@ public class EderinDominicClient
     }
     catch (IOException e)
     {
-      System.err.println("SmartClient Error: Could not open i/o streams");
+      System.err.println("EderinDominicClient: Could not open i/o streams");
       e.printStackTrace();
       return false;
     }
@@ -193,42 +193,42 @@ public class EderinDominicClient
     {
       try
       {
-        if (DEBUG) System.out.println("ClientRandomWalk: listening to socket....");
+        if (DEBUG) System.out.println("EderinDominicClient: listening to socket....");
         data = (CommData) inputStream.readObject();
-        if (DEBUG) System.out.println("ClientRandomWalk: received <<<<<<<<<"+inputStream.available()+"<...\n" + data);
+        if (DEBUG) System.out.println("EderinDominicClient: received <<<<<<<<<"+inputStream.available()+"<...\n" + data);
         
         if (data.errorMsg != null)
         {
-          System.err.println("ClientRandomWalk***ERROR***: " + data.errorMsg);
+          System.err.println("EderinDominicClient***ERROR***: " + data.errorMsg);
           System.exit(0);
         }
       }
       catch (IOException e)
       {
-        System.err.println("ClientRandomWalk***ERROR***: client read failed");
+        System.err.println("EderinDominicClient***ERROR***: client read failed");
         e.printStackTrace();
         System.exit(0);
       }
       catch (ClassNotFoundException e)
       {
-        System.err.println("ClientRandomWalk***ERROR***: client sent incorrect common format");
+        System.err.println("EderinDominicClient***ERROR***: client sent incorrect common format");
       }
     }
     if (data.myTeam != myTeam)
     {
-      System.err.println("ClientRandomWalk***ERROR***: Server returned wrong team name: "+data.myTeam);
+      System.err.println("EderinDominicClient***ERROR***: Server returned wrong team name: "+data.myTeam);
       System.exit(0);
     }
     if (data.myNest == null)
     {
-      System.err.println("ClientRandomWalk***ERROR***: Server returned NULL nest");
+      System.err.println("EderinDominicClient***ERROR***: Server returned NULL nest");
       System.exit(0);
     }
     
     myNestName = data.myNest;
     centerX = data.nestData[myNestName.ordinal()].centerX;
     centerY = data.nestData[myNestName.ordinal()].centerY;
-    System.out.println("ClientRandomWalk: ==== Nest Assigned ===>: " + myNestName);
+    System.out.println("EderinDominicClient: ==== Nest Assigned ===>: " + myNestName);
     return data;
   }
   
@@ -272,7 +272,7 @@ public class EderinDominicClient
         
         if (DEBUG)
         {
-          System.out.println("SmartClient: chooseActions: " + myNestName);
+          System.out.println("EderinDominicClient: chooseActions: " + myNestName);
         }
         
         chooseActionsOfAllAnts(data);
@@ -286,12 +286,12 @@ public class EderinDominicClient
         
         if (DEBUG)
         {
-          System.out.println("SmartClient: listening to socket....");
+          System.out.println("EderinDominicClient: listening to socket....");
         }
         CommData recivedData = (CommData) inputStream.readObject();
         if (DEBUG)
         {
-          System.out.println("SmartClient: received <<<<<<<<<" + inputStream.available() + "<...\n" + recivedData);
+          System.out.println("EderinDominicClient: received <<<<<<<<<" + inputStream.available() + "<...\n" + recivedData);
         }
         data = recivedData;
         
@@ -302,12 +302,12 @@ public class EderinDominicClient
         
         if ((myNestName == null) || (data.myTeam != myTeam))
         {
-          System.err.println("SmartClient: !!!!ERROR!!!! " + myNestName);
+          System.err.println("EderinDominicClient: !!!!ERROR!!!! " + myNestName);
         }
       }
       catch (IOException e)
       {
-        System.err.println("SmartClient***ERROR***: client read failed");
+        System.err.println("EderinDominicClient***ERROR***: client read failed");
         e.printStackTrace();
         try
         {
@@ -356,7 +356,7 @@ public class EderinDominicClient
     {
       if (DEBUG)
       {
-        System.out.println("SmartClient.sendCommData(" + sendData + ")");
+        System.out.println("EderinDominicClient.sendCommData(" + sendData + ")");
       }
       outputStream.writeObject(sendData);
       outputStream.flush();
@@ -364,7 +364,7 @@ public class EderinDominicClient
     }
     catch (IOException e)
     {
-      System.err.println("SmartClient***ERROR***: client read failed");
+      System.err.println("EderinDominicClient***ERROR***: client read failed");
       e.printStackTrace();
       try
       {
@@ -380,7 +380,55 @@ public class EderinDominicClient
     
   }
   
+  private void antGroup()
+  {
+    
+  }
   
+  private AntBrain getBrain (AntData ant, CommData commData, WorldMap map, LinkedList<Tiles> exploreDeque,
+  HashSet<Tiles> blockedMoves, HashSet<Tiles> plannedMoves, int centerX, int centerY,
+  Tiles waterPosition)
+  {
+    AntBrain curr;
+    if(ant.antType.equals(AntType.ATTACK))
+    {
+      curr =  new AttackBrain(ant, commData, map,exploreDeque, blockedMoves,
+              plannedMoves, centerX, centerY, waterPosition);
+      return curr;
+    }
+  
+    else if(ant.antType.equals(AntType.DEFENCE))
+    {
+      curr =  new DefenceBrain(ant, commData, map,exploreDeque, blockedMoves,
+              plannedMoves, centerX, centerY, waterPosition);
+      return curr;
+    }
+  
+    else if(ant.antType.equals(AntType.SPEED))
+    {
+      curr =  new SpeedBrain(ant, commData, map,exploreDeque, blockedMoves,
+              plannedMoves, centerX, centerY, waterPosition);
+      return curr;
+    }
+  
+    else if(ant.antType.equals(AntType.MEDIC))
+    {
+      curr =  new MedicBrain(ant, commData, map,exploreDeque, blockedMoves,
+              plannedMoves, centerX, centerY, waterPosition);
+      return curr;
+    }
+  
+    else if(ant.antType.equals(AntType.VISION))
+    {
+      curr =  new VisionBrain(ant, commData, map,exploreDeque, blockedMoves,
+              plannedMoves, centerX, centerY, waterPosition);
+      return curr;
+    }
+    else
+      curr = new WorkerBrain(ant, commData, map,exploreDeque, blockedMoves,
+              plannedMoves, centerX, centerY, waterPosition);
+      return curr;
+  }
   
   private void chooseActionsOfAllAnts(CommData commData)
   {
@@ -414,6 +462,7 @@ public class EderinDominicClient
     for (AntData ant : commData.myAntList)
     {
       AntBrain curr;
+      
       if (ant.myAction.type == AntAction.AntActionType.DIED)
       {
         if (antTable.containsKey(ant.id))
@@ -429,7 +478,7 @@ public class EderinDominicClient
       }
       else
       {
-        curr = new WorkerBrain(ant, commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
+        curr = getBrain(ant,commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
         antTable.put(ant.id, curr);
       }
       
