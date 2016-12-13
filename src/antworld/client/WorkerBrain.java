@@ -4,7 +4,6 @@ package antworld.client;
  * Created by Dominic on 12/9/2016.
  */
 
-import java.awt.*;
 import antworld.common.Util;
 import antworld.common.AntAction;
 import antworld.common.AntAction.AntActionType;
@@ -16,7 +15,6 @@ import antworld.common.FoodType;
 import java.awt.Point;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Ant wrapper class to wrap the AntData given by the server and perform operations and commands
@@ -24,11 +22,7 @@ import java.util.List;
 public class WorkerBrain extends AntBrain
 {
   
-  
-   
   Command command = Command.EMPTY;
-  
-  
   
   // Debug flags
   public static final boolean DEBUG_HOME = false;
@@ -37,8 +31,12 @@ public class WorkerBrain extends AntBrain
   public static final boolean DEBUG_BLOCKED = false;
   
   
+
   
-   
+  
+  /**
+   * Commands to control the ant with, some unimplemented
+   */
   enum Command
   {
     EXPLORE,
@@ -122,6 +120,7 @@ public class WorkerBrain extends AntBrain
           command = Command.ESCAPE;
         }
         break;
+      
       case EXPLORE:
         if (target == null || (target.xPos == data.gridX && target.yPos == data.gridY))
         {
@@ -202,8 +201,5 @@ public class WorkerBrain extends AntBrain
         break;
     }
   }
-  
-  
- 
   
 }

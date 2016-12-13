@@ -483,9 +483,9 @@ public class EderinDominicClient
       }
       else
       {
-        curr = getBrain(ant, commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
+        curr = new AntBrain(ant, commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
         antTable.put(ant.id, curr);
-        antGroup(curr);
+        //antGroup(curr);
       }
       
       if (basicAnt == null)
@@ -594,7 +594,6 @@ public class EderinDominicClient
       }
     }
     
-    // Need better way to set explore tiles
     Collections.sort(exploreDeque, new Comparator<Tiles>()
     {
       
@@ -605,10 +604,7 @@ public class EderinDominicClient
       }
     });
     
-    //System.out.println("Distance first = " + exploreDeque.get(0).distance(centerX, centerY));
-    //System.out.println("Distance second = " + exploreDeque.get(1).distance(centerX, centerY));
-    //System.out.println("Distance last = " + exploreDeque.peekLast().distance(centerX, centerY));
-    
+   
   }
   
   /**
@@ -625,56 +621,6 @@ public class EderinDominicClient
       }
     }
   }
-  
-  /**
-   * Birth a new ant of preferred type need to test called on line 449
-   *
-   * @param commData current comm data to update
-   */
-  /*private void birthNewAnt(CommData commData)
-  {
-    List<AntType> preferences = new ArrayList<AntType>();
-    preferences.add(AntType.DEFENCE);
-    preferences.add(AntType.WORKER);
-    preferences.add(AntType.ATTACK);
-    preferences.add(AntType.SPEED);
-    preferences.add(AntType.VISION);
-    preferences.add(AntType.MEDIC);
-    
-    // Try preferred birth type
-    for (AntType type : preferences)
-    {
-      int i = 0;
-      while(type.getBirthFood().si)
-      if (commData.foodStockPile[type.getBirthFood().ordinal()] >= type.getFoodUnitsToSpawn())
-      {
-        AntData newAnt = new AntData(Constants.UNKNOWN_ANT_ID, type, commData.myNest, commData.myTeam);
-        newAnt.myAction = new AntAction(AntAction.AntActionType.BIRTH);
-        commData.myAntList.add(newAnt);
-        if (DEBUG)
-        {
-          System.out.println("Birthing new ant of type " + type);
-        }
-        return;
-      }
-    }
-    
-    // Otherwise search through all types
-    for (AntType type : AntType.values())
-    {
-      if (commData.foodStockPile[type.getBirthFood().ordinal()] >= type.getFoodUnitsToSpawn())
-      {
-        AntData newAnt = new AntData(Constants.UNKNOWN_ANT_ID, type, commData.myNest, commData.myTeam);
-        newAnt.myAction = new AntAction(AntAction.AntActionType.BIRTH);
-        commData.myAntList.add(newAnt);
-        if (DEBUG)
-        {
-          System.out.println("Birthing new ant of type " + type);
-        }
-        return;
-      }
-    }
-  }*/
   
   /**
    * Main runs the client and connects to the server

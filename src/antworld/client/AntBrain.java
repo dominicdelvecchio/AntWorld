@@ -175,6 +175,7 @@ public class AntBrain
       case EXPLORE:
         if (target == null || (target.xPos == data.gridX && target.yPos == data.gridY))
         {
+          
           target = exploreDeque.pop();
           exploreDeque.addLast(target);
         }
