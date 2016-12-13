@@ -89,19 +89,16 @@ public class WorldMap
 
     for(int xPos = EXPLORE_SIZE / 2; xPos < WIDTH; xPos += EXPLORE_SIZE)
     {
-       
-      //System.out.println("1Explore");
+      
       
       for(int yPos = EXPLORE_SIZE / 2; yPos < HEIGHT; yPos += EXPLORE_SIZE)
       {
-        
+        count++;
         //System.out.println("2Explore"+count);
         Tiles currentTile = getTile(xPos, yPos);
 
         
-        exploreTiles.add(currentTile);
-        count++;
-        
+        exploreTiles.add(currentTile); count++; System.out.println("test"+count);
 
         /*else
           {

@@ -483,9 +483,9 @@ public class EderinDominicClient
       }
       else
       {
-        curr = new AntBrain(ant, commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
+        curr = getBrain(ant, commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
         antTable.put(ant.id, curr);
-        //antGroup(curr);
+        antGroup(curr);
       }
       
       if (basicAnt == null)
