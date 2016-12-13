@@ -1,5 +1,5 @@
 Authors:
-Ederin 
+Ederin Igharoro
 Dominic Del Vecchio
 
 In groups of 2, write a client that connects to the Ant World server and intelligently manages an ant colony.
