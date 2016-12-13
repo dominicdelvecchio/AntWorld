@@ -83,15 +83,19 @@ public class AntBrain
   public static final boolean DEBUG_FOOD = false;
   public static final boolean DEBUG_MOVE = false;
   public static final boolean DEBUG_BLOCKED = false;
+  public boolean isAntLeader = false;
+  public boolean inGroup = false;
+  public Tiles antLeader;
+  
   
   // Moves to avoid
-  private final HashSet<Tiles> blockedMoves;
-  private final HashSet<Tiles> plannedMoves;
+  public final HashSet<Tiles> blockedMoves;
+  public final HashSet<Tiles> plannedMoves;
   
   /**
    * Distance to count near food
    */
-  private final int NEAR_DISTANCE;
+  public final int NEAR_DISTANCE;
   
   
   
@@ -506,7 +510,7 @@ public class AntBrain
    * @param deltaY y delta of move
    * @return direction of to move corresponding delta
    */
-  private Direction moveToDirection(int deltaX, int deltaY)
+  public Direction moveToDirection(int deltaX, int deltaY)
   {
     for (Direction dir : Direction.values())
     {
@@ -584,7 +588,7 @@ public class AntBrain
     return false;
   }
   
-  private boolean nextToWater()
+  public boolean nextToWater()
   {
     for (Tiles neighbor : map.getNeighbors(tile.xPos, tile.yPos))
     {

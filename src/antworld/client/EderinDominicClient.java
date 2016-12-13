@@ -28,6 +28,8 @@ import antworld.common.FoodType;
 import antworld.common.NestNameEnum;
 import antworld.common.TeamNameEnum;
 import antworld.client.DisplayMap;
+import javafx.concurrent.Worker;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -47,7 +49,7 @@ public class EderinDominicClient
   
   private boolean DEBUG = false;
   private boolean GUI = false;
-  private static final TeamNameEnum myTeam = TeamNameEnum.Ederin_Dominic;
+  private final TeamNameEnum myTeam;
   private static final long password = 962740848319L;//Each team has been assigned a random password.
   private ObjectInputStream inputStream = null;
   private ObjectOutputStream outputStream = null;
@@ -60,6 +62,8 @@ public class EderinDominicClient
   private LinkedList<Tiles> exploreDeque;
   
   private HashMap<Integer, AntBrain> antTable = new HashMap<>();
+  private LinkedList<AntBrain> workerGroup;
+  private LinkedList<AntBrain> attackGroup;
   private final WorldMap map;
   private HashSet<Tiles> plannedMoves;
   private HashSet<Tiles> blockedMoves;
@@ -73,72 +77,47 @@ public class EderinDominicClient
   private static Random random = Constants.random;
   private static final int MIN_ANT_ALIVE = 40;
   
-  public EderinDominicClient(String host, int portNumber, int debugFlag) throws IOException
+  public EderinDominicClient(String host, int portNumber, TeamNameEnum team) throws IOException
   {
     plannedMoves = new HashSet<>();
     blockedMoves = new HashSet<>();
     this.exploreDeque = new LinkedList<>();
-    switch (debugFlag)
-    {
-      case 1:
-        DEBUG = true;
-        break;
-      case 2:
-        DEBUG = true;
-        GUI = true;
-        break;
-      case 3:
-        DEBUG = false;
-        GUI = true;
-      default:
-        break;
-    }
-    
+    this.workerGroup = new LinkedList<>();
+    this.attackGroup = new LinkedList<>();
     this.map = new WorldMap();
-    
-    System.out.println("Starting EdernDominicClient: " + System.currentTimeMillis());
-    isConnected = false;
-    while (!isConnected)
-    {
-      isConnected = openConnection(host, portNumber);
-      if (!isConnected)
-      {
-        try
-        {
-          Thread.sleep(1000);
-        }
-        catch (InterruptedException e1)
-        {
-        }
-      }
-    }
+  
+    myTeam = team;
+    System.out.println("Starting " + team +" on " + host + ":" + portNumber + " at "
+            + System.currentTimeMillis());
+  
+    isConnected = openConnection(host, portNumber);
+    if (!isConnected) System.exit(0);
+    CommData data = obtainNest();
+    mainGameLoop(data);
+    closeAll();
     
     if (GUI)
     {
       mapView = new DisplayMap(exploreDeque);
     }
     
-    CommData data = obtainNest();
-    mainGameLoop(data);
-    closeAll();
   }
   
   private boolean openConnection(String host, int portNumber)
   {
-    
     try
     {
       clientSocket = new Socket(host, portNumber);
     }
     catch (UnknownHostException e)
     {
-      System.err.println("EderinDominicClient Error: Unknown Host " + host);
+      System.err.println("ClientRandomWalk Error: Unknown Host " + host);
       e.printStackTrace();
       return false;
     }
     catch (IOException e)
     {
-      System.err.println("EderinDominicClient: Could not open connection to " + host + " on port " + portNumber);
+      System.err.println("ClientRandomWalk Error: Could not open connection to " + host + " on port " + portNumber);
       e.printStackTrace();
       return false;
     }
@@ -151,7 +130,7 @@ public class EderinDominicClient
     }
     catch (IOException e)
     {
-      System.err.println("EderinDominicClient: Could not open i/o streams");
+      System.err.println("ClientRandomWalk Error: Could not open i/o streams");
       e.printStackTrace();
       return false;
     }
@@ -162,23 +141,17 @@ public class EderinDominicClient
   
   public void closeAll()
   {
-    System.out.println("EderinDominicClient.closeAll()");
+    System.out.println("ClientRandomWalk.closeAll()");
     {
       try
       {
-        if (outputStream != null)
-        {
-          outputStream.close();
-        }
-        if (inputStream != null)
-        {
-          inputStream.close();
-        }
+        if (outputStream != null) outputStream.close();
+        if (inputStream != null) inputStream.close();
         clientSocket.close();
       }
       catch (IOException e)
       {
-        System.err.println("EderinDominicClient Error: Could not close");
+        System.err.println("ClientRandomWalk Error: Could not close");
         e.printStackTrace();
       }
     }
@@ -193,42 +166,42 @@ public class EderinDominicClient
     {
       try
       {
-        if (DEBUG) System.out.println("EderinDominicClient: listening to socket....");
+        if (DEBUG) System.out.println("ClientRandomWalk: listening to socket....");
         data = (CommData) inputStream.readObject();
-        if (DEBUG) System.out.println("EderinDominicClient: received <<<<<<<<<"+inputStream.available()+"<...\n" + data);
+        if (DEBUG) System.out.println("ClientRandomWalk: received <<<<<<<<<"+inputStream.available()+"<...\n" + data);
         
         if (data.errorMsg != null)
         {
-          System.err.println("EderinDominicClient***ERROR***: " + data.errorMsg);
+          System.err.println("ClientRandomWalk***ERROR***: " + data.errorMsg);
           System.exit(0);
         }
       }
       catch (IOException e)
       {
-        System.err.println("EderinDominicClient***ERROR***: client read failed");
+        System.err.println("ClientRandomWalk***ERROR***: client read failed");
         e.printStackTrace();
         System.exit(0);
       }
       catch (ClassNotFoundException e)
       {
-        System.err.println("EderinDominicClient***ERROR***: client sent incorrect common format");
+        System.err.println("ClientRandomWalk***ERROR***: client sent incorrect common format");
       }
     }
     if (data.myTeam != myTeam)
     {
-      System.err.println("EderinDominicClient***ERROR***: Server returned wrong team name: "+data.myTeam);
+      System.err.println("ClientRandomWalk***ERROR***: Server returned wrong team name: "+data.myTeam);
       System.exit(0);
     }
     if (data.myNest == null)
     {
-      System.err.println("EderinDominicClient***ERROR***: Server returned NULL nest");
+      System.err.println("ClientRandomWalk***ERROR***: Server returned NULL nest");
       System.exit(0);
     }
     
     myNestName = data.myNest;
     centerX = data.nestData[myNestName.ordinal()].centerX;
     centerY = data.nestData[myNestName.ordinal()].centerY;
-    System.out.println("EderinDominicClient: ==== Nest Assigned ===>: " + myNestName);
+    System.out.println("ClientRandomWalk: ==== Nest Assigned ===>: " + myNestName);
     return data;
   }
   
@@ -239,6 +212,7 @@ public class EderinDominicClient
     int foodCount = 0;
     
     setExploreTiles();
+    
     setRightMostWater();
     
     //waterPositionMethed();
@@ -354,35 +328,65 @@ public class EderinDominicClient
     CommData sendData = data.packageForSendToServer();
     try
     {
-      if (DEBUG)
-      {
-        System.out.println("EderinDominicClient.sendCommData(" + sendData + ")");
-      }
+      if (DEBUG) System.out.println("ClientRandomWalk.sendCommData(" + sendData +")");
       outputStream.writeObject(sendData);
       outputStream.flush();
       outputStream.reset();
     }
     catch (IOException e)
     {
-      System.err.println("EderinDominicClient***ERROR***: client read failed");
+      System.err.println("ClientRandomWalk***ERROR***: client read failed");
       e.printStackTrace();
-      try
-      {
-        Thread.sleep(1000);
-      }
-      catch (InterruptedException e1)
-      {
-      }
-      return false;
+      System.exit(0);
     }
     
     return true;
     
   }
   
-  private void antGroup()
+  private void antGroup(AntBrain ant)
   {
-    
+    if(ant.data.antType.equals(AntType.WORKER))
+    {
+      if(workerGroup.size() < 3)
+      {
+        workerGroup.add(ant);
+      }
+      
+      else
+      {
+        AntBrain curr;
+        ant.isAntLeader = true;
+        ant.inGroup = true;
+        for(int i = 0; i < 3; i++)
+        {
+          curr = workerGroup.pop();
+          curr.inGroup = true;
+          curr.antLeader = ant.target;
+        }
+      }
+      
+    }
+    else if(ant.data.antType.equals(AntType.ATTACK))
+    {
+      if(attackGroup.size() < 3)
+      {
+        attackGroup.add(ant);
+      }
+  
+      else
+      {
+        AntBrain curr;
+        ant.isAntLeader = true;
+        ant.inGroup = true;
+        for(int i = 0; i < 3; i++)
+        {
+          curr = attackGroup.pop();
+          curr.inGroup = true;
+          curr.antLeader = ant.target;
+        }
+      }
+    }
   }
   
   private AntBrain getBrain (AntData ant, CommData commData, WorldMap map, LinkedList<Tiles> exploreDeque,
@@ -432,6 +436,7 @@ public class EderinDominicClient
   
   private void chooseActionsOfAllAnts(CommData commData)
   {
+    
     if (GUI)
     {
       mapView.setData(commData);
@@ -478,8 +483,9 @@ public class EderinDominicClient
       }
       else
       {
-        curr = getBrain(ant,commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
+        curr = getBrain(ant, commData, map, exploreDeque, blockedMoves, plannedMoves, centerX, centerY, waterPosition);
         antTable.put(ant.id, curr);
+        antGroup(curr);
       }
       
       if (basicAnt == null)
@@ -504,8 +510,6 @@ public class EderinDominicClient
   
   private void chooseAction(AntBrain curr, CommData commData)
   {
-    if (curr.canMove())
-    {
       
       if (curr.equals(basicAnt))
       {
@@ -555,15 +559,17 @@ public class EderinDominicClient
       else if (curr.target != null && curr.command == AntBrain.Command.EXPLORE && curr.tile.distance(centerX, centerY) > MAX_EXPLORE_DIST)
       {
         exploreDeque.remove(curr.target);
+        
         curr.target = null;
+      }
+      else
+      {
+        curr.stasis();
       }
       
       curr.continueCommand();
-    }
-    else
-    {
-      curr.stasis();
-    }
+    
+   
     
   }
   
@@ -573,13 +579,18 @@ public class EderinDominicClient
    *
    * If ants find that they are moving to far away
    */
+  int count;
   private void setExploreTiles()
   {
     for (Tiles tile : map.exploreTiles)
     {
+      
       if (tile.distance(centerX, centerY) < MAX_EXPLORE_DIST && tile.distance(centerX, centerY) > 30)
       {
+        
         exploreDeque.push(tile);
+        //count++;
+        //System.out.println("test"+count);
       }
     }
     
@@ -594,9 +605,9 @@ public class EderinDominicClient
       }
     });
     
-    System.out.println("Distance first = " + exploreDeque.get(0).distance(centerX, centerY));
-    System.out.println("Distance second = " + exploreDeque.get(1).distance(centerX, centerY));
-    System.out.println("Distance last = " + exploreDeque.peekLast().distance(centerX, centerY));
+    //System.out.println("Distance first = " + exploreDeque.get(0).distance(centerX, centerY));
+    //System.out.println("Distance second = " + exploreDeque.get(1).distance(centerX, centerY));
+    //System.out.println("Distance last = " + exploreDeque.peekLast().distance(centerX, centerY));
     
   }
   
@@ -674,17 +685,13 @@ public class EderinDominicClient
   public static void main(String[] args) throws IOException
   {
     String serverHost = "localhost";
-    //System.out.println(args.length);
-    if (args.length > 0)
-    {
-      serverHost = args[0];
-    }
-    
+    if (args.length > 0) serverHost = args[args.length -1];
+  
+    TeamNameEnum team = TeamNameEnum.Ederin_Dominic;
     if (args.length > 1)
-    {
-      new EderinDominicClient(serverHost, Constants.PORT, Integer.parseInt(args[1]));
+    { team = TeamNameEnum.getTeamByString(args[0]);
     }
-    
-    new EderinDominicClient(serverHost, Constants.PORT, 0);
+  
+    new EderinDominicClient(serverHost, Constants.PORT, team);
   }
 }

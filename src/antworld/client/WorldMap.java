@@ -26,6 +26,7 @@ public class WorldMap
   public AstarAlgorithm discoverPath;
   public Set<Tiles>exploreTiles;
   public HashMap<Tiles, Set<Tiles> > exploreNeighbors;
+  int count;
 
 
   public WorldMap() throws IOException
@@ -42,9 +43,10 @@ public class WorldMap
         mapTiles[i][j] = generateWorldMapTiles(i, j, worldMapImage);
       }
     }
-
+    
     discoverPath = new AstarAlgorithm(this);
     generateExploreSetAndMap();
+    
 
   }
 
@@ -82,25 +84,35 @@ public class WorldMap
 
   public void generateExploreSetAndMap()
   {
+    
     exploreTiles = new HashSet<>();
 
     for(int xPos = EXPLORE_SIZE / 2; xPos < WIDTH; xPos += EXPLORE_SIZE)
     {
+       
+      //System.out.println("1Explore");
+      
       for(int yPos = EXPLORE_SIZE / 2; yPos < HEIGHT; yPos += EXPLORE_SIZE)
       {
+        
+        //System.out.println("2Explore"+count);
         Tiles currentTile = getTile(xPos, yPos);
 
-        if(currentTile.land){exploreTiles.add(currentTile);}
+        
+        exploreTiles.add(currentTile);
+        count++;
+        
 
-        else
+        /*else
           {
             currentTile = locateLandNearTile(currentTile);
-
+            
             if(currentTile != null)
             {
               exploreTiles.add(currentTile);
+              
             }
-          }
+          }*/
       }
     }
 
